@@ -278,6 +278,21 @@
 \addcontentsline{toc}{chapter}{References}
 \bibliography{Bib/BioComp_References}
 
+%===================================================
+%================== APPENDIX (1st way, used in D3.1)
+%===================================================
+\appendix
+
+
+\addcontentsline{toc}{chapter}{Appendix: Additional Functional Requirements and Business Logic Model (2018)}
+
+\setcounter{chapter}{1}
+\renewcommand\thechapter{}
+\makeatletter
+\renewcommand\thesection{\@Alph\c@chapter.\@arabic\c@section}
+\makeatother
+
+\input{3-Appendix/SardexNewPaymentSpec_AddOns}
 
 
 \end{document}
