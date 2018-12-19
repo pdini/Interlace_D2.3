@@ -61,26 +61,18 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 
 \begin{asm}
 	\ASM{ClearDeltaDebt}(txid,credit,channel,from,to,amount)=\+
-		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\\
-		\LET clearedAmount = amount\+
-			\FORALL delta \IN openDeltas \DO\ \IF clearAmount > 0 \THEN\+
-				\IF debtPos(delta) >= clearedAmount \THEN\+
-					debtPos(delta) := debtPos(delta) - clearedAmount\\
-					clearedAmount := 0\-
-				\ELSE\+
-					clearedAmount := clearedAmount - debtPos(delta)\\
-					debtPos(delta) := 0\-\-
-\end{asm}
-
-Not working yet...
-\begin{asm}
-	\ASM{ClearDebt}(openDeltas, amount) =\+
-		\CHOOSE delta \IN openDeltas  \WITH created(delta) = \ASM{SelectMinDelta}(openDelata) \DO\+
+		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\+
+			\ASM{ClearDebt}(openDeltas, amount)\dec\-
+	\WHERE \+
+		\ASM{ClearDebt}(openDeltas, amount) =\+
+		\IF\ \NOT openDeltas = \emptyset \THEN\+
+		\LET delta = \ASM{SelectMinDelta}(openDeltas)\+
 			\IF debtPos(delta) >= amount \THEN\+
-				debtPos(delta) := debtPos(delta) - amount\-			
+				debtPos(delta) := debtPos(delta) - amount\-
 			\ELSE\+
-				\LET clearedAmount = debtPos(delta)\+					
-					\ASM{ClearDebt}(openDeltas, amount - clearedAmount)\\
+				\LET clearedAmount = debtPos(delta)\\
+				\LET newOpenDeltas = \ASM{RemoveResolvedDelta}(openDeltas, delta)\+
+					\ASM{ClearDebt}(newOpenDeltas, amount - clearedAmount)\\
 					debtPos(delta) = 0
 \end{asm}
 
