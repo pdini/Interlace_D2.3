@@ -1,5 +1,5 @@
 *.aux
-misc/*.aux
+Misc/*.aux
 *.bbl
 *.blg
 *.toc
@@ -10,3 +10,10 @@ main.pdf
 !.gitkeep
 *.synctex.gz
 *.out
+*.pdf
+!Figures/*.pdf
+*.ps
+*.fls
+*.fdb_latexmk
+*.~vsdx
+*.dvi.out
