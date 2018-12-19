@@ -65,14 +65,18 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 			\ASM{ClearDebt}(openDeltas, amount)\dec\-
 	\WHERE \+
 		\ASM{ClearDebt}(openDeltas, amount) =\+
-		\IF\ \NOT openDeltas = \emptyset \THEN\+
 		\LET delta = \ASM{SelectMinDelta}(openDeltas)\+
 			\IF debtPos(delta) >= amount \THEN\+
 				debtPos(delta) := debtPos(delta) - amount\-
 			\ELSE\+
-				\LET newOpenDeltas = \ASM{RemoveResolvedDelta}(openDeltas, delta)\+
-					\ASM{ClearDebt}(newOpenDeltas, amount - debtPos(delta)) \SEQ\\
-					debtPos(delta) = 0
+				\LET restAmount = amount - debtPos(delta)\+
+					debtPos(delta) = 0\SEQ\\
+					\ASM{ClearDebt}(openDeltas, restAmount )\dec\dec\dec\-
+%		\ASM{SelectMinDelta}(openDeltas)\+
+%			\FORALL delta \IN openDeltas \WITH debtPos(delta) > 0 \DO\+
+%				\IF min(delta) =\ \UNDEF\ \OR  min(delta) > timestamp(delta) \THEN\+
+%					min(delta) = timestamp(delta)\dec\-
+%			return\ min(delta)
 \end{asm}
 
-In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries which are sorted from the oldest to the newest as well as processed accordingly by the $forall$ loop.
+In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries. $SelectMinDelta$ selects the delta debt having the minimum timestamp given that all cleared debts with $debtPos(delta)=0$ are excluded.
