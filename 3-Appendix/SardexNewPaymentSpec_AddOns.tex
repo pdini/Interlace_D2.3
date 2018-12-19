@@ -64,12 +64,24 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\\
 		\LET clearedAmount = amount\+
 			\FORALL delta \IN openDeltas \DO\ \IF clearAmount > 0 \THEN\+
-				\IF debtPos(delta) >= clearAmount \THEN\+
-					debtPos(delta) := clearAmount\\
-					clearAmount := 0\-
+				\IF debtPos(delta) >= clearedAmount \THEN\+
+					debtPos(delta) := clearedAmount\\
+					clearedAmount := 0\-
 				\ELSE\+
-					clearAmount := clearAmount - debtPos(delta)\\
+					clearedAmount := clearedAmount - debtPos(delta)\\
 					debtPos(delta) := 0\-\-
+\end{asm}
+
+Not working yet...
+\begin{asm}
+	\ASM{ClearDebt}(openDeltas, amount) =\+
+		\CHOOSE delta \IN openDeltas  \WITH created(delta) = \ASM{SelectMinDelta}(openDelata) \DO\+
+			\IF debtPos(delta) >= amount \THEN\+
+					debtPos(delta) := amount\\					
+				\ELSE\+
+					\LET clearedAmount = debtPos(delta)\+
+						\ASM{ClearDebt}(openDeltas, amount - clearedAmount)\\
+						debtPos(delta) = 0
 \end{asm}
 
 In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries which are sorted from the oldest to the newest as well as processed accordingly by the $forall$ loop.
