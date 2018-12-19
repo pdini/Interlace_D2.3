@@ -29,17 +29,47 @@ Let's assume a transaction as illustrated in the figure \ref{fig:debt-graph}, wh
 
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
-           |balance_{t_i} - amount_{t_i}| \+ & \IF i = 0 \AND balance_{t_0} >= 0 \AND amount > balance\\
-           amount_{t_i} & \ELSEIF i >= 0 \AND balance_{t_i} < 0
+           |balance_{t_i} - amount_{t_i}| \+\+ & \IF i = 0 \AND balance_{t_0} >= 0 \AND amount > balance\\
+           amount_{t_i} & \ELSEIF i >= 0 \AND balance_{t_i} < 0\\
+           \UNDEF & \ELSE
         \end{array}\right .\-
 \end{asm}
 
-When declaring $TXID_i$ as the transaction id we are defining a so called \textit{delta debt} as the following tuple
+When declaring $TXID_i$ as the transaction id which is executed at time $t_i$ and $MBRID$ as the member id, we are defining a so called \textit{delta debt} as the following tuple
 
 \begin{asm}
-	dD_i = (t_i, TXID_i, Amount_{t_i}, DebtPos_{t_i})
+	dD_i = (t_i, TXID_i, Amount_{t_i}, DebtPos_{t_i}, MBRID)
 \end{asm}
 
-where the $Amount_{t_i}$ as well as $DebtPos_{t_i}$ are initialized with $debt_{t_i}$. In the following $Amount_{t_i}$ will always stay with its original value whereas $DebtPos_{t_i}$ will be reduced by an amount transferred \textbf{to} the same account.
+where the $Amount_{t_i}$ as well as $DebtPos_{t_i}$ are initialized with $debt_{t_i}$. In the following $Amount_{t_i}$ will always stay with its original value whereas $DebtPos_{t_i}$ will be reduced by an amount \textbf{received} by the same account.
 
-\todo{asm code}
+The creation of a \textit{delta debt} can be described as following:
+
+\begin{asm}
+	\ASM{CreateDeltaDebt}(txid,currentDate,from,to,amount)=\+
+		\LET balance = \ASM{balanceOf}(from)\+
+			\IF (balance - amount) < 0 \THEN\+
+				\LET debt =  \+\left\{\begin{array}{ll}
+						|balance - amount|\+& \IF balance > 0\\
+						amount & \ELSE
+					\end{array}\right.\-\-
+				\LET deltaDebt = (currentDate, txid, debt, debt, from)\+
+					\ASM{WriteDeltaDebt}(deltaDebt)
+\end{asm}
+
+In order to pay back an open debt at every transfer it needs to be checked for possible debt clearances:
+
+\begin{asm}
+	\ASM{ClearDeltaDebt}(txid,credit,channel,from,to,amount)=\+
+		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\\
+		\LET clearedAmount = amount\+
+			\FORALL delta \IN openDeltas \DO\ \IF clearAmount > 0 \THEN\+
+				\IF debtPos(delta) >= clearAmount \THEN\+
+					debtPos(delta) := clearAmount\\
+					clearAmount := 0\-
+				\ELSE\+
+					clearAmount := clearAmount - debtPos(delta)\\
+					debtPos(delta) := 0\-\-
+\end{asm}
+
+In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries which are sorted from the oldest to the newest as well as processed accordingly by the $forall$ loop.
