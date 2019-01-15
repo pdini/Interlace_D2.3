@@ -30,7 +30,7 @@ Let's assume a transaction as illustrated in the figure \ref{fig:debt-graph}, wh
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
            |balance_{t_i} - amount_{t_i}| \+\+ & \IF i = 0 \AND balance_{t_0} >= 0 \AND amount > balance\\
-           amount_{t_i} & \ELSEIF i >= 0 \AND balance_{t_i} < 0\\
+           amount_{t_i} & \ELSEIF i > 0 \AND balance_{t_i} < 0\\
            \UNDEF & \ELSE
         \end{array}\right .\-
 \end{asm}
@@ -70,7 +70,7 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 				debtPos(delta) := debtPos(delta) - amount\-
 			\ELSE\+
 				\LET restAmount = amount - debtPos(delta)\+
-					debtPos(delta) = 0\SEQ\\
+					debtPos(delta) := 0\SEQ\\
 					\ASM{ClearDebt}(openDeltas, restAmount )\dec\dec\dec\-
 %		\ASM{SelectMinDelta}(openDeltas)\+
 %			\FORALL delta \IN openDeltas \WITH debtPos(delta) > 0 \DO\+
@@ -79,4 +79,4 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 %			return\ min(delta)
 \end{asm}
 
-In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries. $SelectMinDelta$ selects the delta debt having the minimum timestamp given that all cleared debts with $debtPos(delta)=0$ are excluded.
+In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries from the persistence layer. $SelectMinDelta$ selects the delta debt having the minimum timestamp given that all cleared debts with $debtPos(delta)=0$ are excluded.
