@@ -60,7 +60,7 @@ The creation of a \textit{delta debt} can be described as following:
 In order to pay back an open debt at every transfer it needs to be checked for possible debt clearances:
 
 \begin{asm}
-	\ASM{ClearDeltaDebt}(txid,credit,channel,from,to,amount)=\+
+	\ASM{ClearDeltaDebt}(txid,credit,channel,to,amount)=\+
 		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\+
 			\ASM{ClearDebt}(openDeltas, amount)\dec\-
 	\WHERE \+
@@ -79,4 +79,7 @@ In order to pay back an open debt at every transfer it needs to be checked for p
 %			return\ min(delta)
 \end{asm}
 
-In that ASM example we assume that $SelectOpenDeltaDebtFor$ is returning a list of open \textit{delta debt} entries from the persistence layer. $SelectMinDelta$ selects the delta debt having the minimum timestamp given that all cleared debts with $debtPos(delta)=0$ are excluded.
+
+In that ASM example we assume that \ASM{SelectOpenDeltaDebtFor} is returning a list of open \textit{delta debt} entries from the persistence layer with $debtPos(delta)>0$. \ASM{SelectMinDelta} selects the delta debt of a respective list with a minimum timestamp given that all cleared debts having $debtPos(delta)=0$ are excluded.
+
+$debtPos(delta)$ is reading or writing the pending amount for a particular debt (here: $delta$).
