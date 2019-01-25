@@ -10,9 +10,9 @@ In order to see how to manage a more challenging use case based on reading histo
 
 \section{Requirement: Debt Record Tracking}
 
-Sardex sets the credit line of the circuit's SME users based on their turnover as well as on their track record. Thus, the balance of an account, as described in the requirements of \cite{INTERLACE_D21} as well as \cite{INTERLACE_D31}, can go negative (with a 0\% interest rate). However, that negative amount or debt needs to be paid back within 12 Month from the time of the transaction that made the balance negative or, more generally, that increases the debt of an already negative balance.
+Sardex sets the credit line of the circuit's SME users based on their turnover as well as on their track record. Thus, the balance of an account, as described in the requirements of \cite{INTERLACE_D21} as well as \cite{INTERLACE_D31}, can go negative (with a 0\% interest rate). That negative amount or debt needs to be paid back within 12 Month from the time of the transaction that made the balance negative and, more generally, from the time of any transaction that increases the debt of an already negative balance.
 
-More precisely, any transaction that increases the debt of an account triggers a record of that newly created portion of debt and causes the system to allocate a separately handled due date 12 months later for its repayment. On the other hand, if an account receives a positive amount of credits (due to the sale of a product or service), then the ``debt-portions'' which that account may have accrued up to then are paid back in sequence, starting from the oldest unpaid one.
+More precisely, any transaction that increases the debt of an account triggers a recording of that newly created portion of debt and causes the system to allocate a separately-handled due date 12 months later for its repayment. On the other hand, if an account receives a positive amount of credits (due to the sale of a product or service), then the ``debt-portions'' which that account may have accrued up to then are paid back in sequence, starting from the oldest unpaid one.
 
 \renewcommand{\thefigure}{A.\arabic{figure}}
 \setcounter{figure}{0}
@@ -24,23 +24,25 @@ More precisely, any transaction that increases the debt of an account triggers a
   \label{fig:debt-graph}
 \end{figure}
 
-Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ having a $j>k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$. This transaction at $t_0$ creates a debt of $balance$ reduced by the transaction $amount$ given that $balance \ge 0$ and $amount > balance$. The debts $dD_0$ and $dD_1$ possibly created during a transaction are represented in figure \ref{fig:debt-graph}. These debts will be handled further as positive values, thus, we define a debt created at $t_i$ with
+Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ with $j>k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$.
 
+The transaction at $t_0$ creates a debt whose value is stored in the variable $balance$ after the transaction. In other words, the value of $balance$ before the transaction is reduced by the transaction $amount$, and it becomes a debt because, before the transaction, $balance \ge 0$ and $amount > balance$. The debts $dD_0$ and $dD_1$  created by this transaction and by a possible further transaction, respectively, are represented in Figure \ref{fig:debt-graph}. Furthermore, these debts are treated as positive values. Thus, we define a debt created at $t_i$ as
+
+\vspace{0.2cm}
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
            |balance_{t_i} - amount_{t_i}| \+\+ & \IF i = 0 \AND balance_{t_0} \ge 0 \AND amount > balance\\
            amount_{t_i} & \ELSEIF i > 0 \AND balance_{t_i} < 0\\
            0 & \ELSE
-        \end{array}\right .\-
+        \end{array}\right.
 \end{asm}
+\vspace{-0.2cm}
 
 When declaring $txid_{t_i}$ as the id for a transaction which is executed at time $t_i$ and $accid$ as the account id, we are defining a so-called \textit{deltaDebt} with index $i$ as the following tuple:
-
 \begin{align}
-	deltaDebt_i = (t_i, txid_{t_i}, amount_{t_i}, debtPos_{t_i}, accid)
+	deltaDebt_i = (t_i, txid_{t_i}, amount_{t_i}, debtPos_{t_i}, accid),
 \end{align}
-
-where the $amount_{t_i}$ as well as $debtPos_{t_i}$ are both initialized with $debt_{t_i}$. In the following, $amount_{t_i}$ will always stay with its original value whereas $debtPos_{t_i}$ will be reduced by an amount \textbf{received} by the same account.
+where the $amount_{t_i}$ as well as $debtPos_{t_i}$ are both initialized with $debt_{t_i}$. In the following, $amount_{t_i}$ will always remain at its original value whereas $debtPos_{t_i}$ will be reduced by an amount \textbf{received} by the corresponding account.
 
 The creation of a \textit{deltaDebt} can be described as follows:
 
@@ -56,7 +58,7 @@ The creation of a \textit{deltaDebt} can be described as follows:
 					\ASM{WriteDeltaDebt}(deltaDebt)
 \end{asm}
 
-In order to pay back an open debt, at every transfer the $deltaDebts$ need to be checked for possible clearances:
+In order to pay back an open debt, at every transfer the $deltaDebt$s need to be checked for possible clearances:
 
 \begin{asm}
 	\ASM{ClearDeltaDebt}(txid,to,amount)=\+
@@ -76,7 +78,7 @@ In order to pay back an open debt, at every transfer the $deltaDebts$ need to be
 \end{asm}
 
 
-In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a list of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding list with a minimum timestamp given that all cleared debts having $debtPos(delta)=0$ are excluded. Further \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or also \textbf{undef}.
+In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a list of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding list with a minimum timestamp given that all cleared debts having $debtPos(delta) = 0$ \textcolor{red}{Is this correct? Should it be $debtPos(t_i) = 0$? Or maybe $debtPos_{t_i} = 0$? }are excluded. Further \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or also \textbf{undef}.
 
 $debtPos(Tmin)$ reads or writes the pending amount for a particular $deltaDebt$ (here: $Tmin$).
 
