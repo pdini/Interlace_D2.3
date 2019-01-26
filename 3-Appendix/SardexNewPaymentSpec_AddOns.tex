@@ -24,12 +24,9 @@ More precisely, any transaction that increases the debt of an account triggers a
   \label{fig:debt-graph}
 \end{figure}
 
-Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ having a $j>k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction at $t_0$, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$.
+Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ with $j>k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction at $t_0$, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$.
 
-This transaction at $t_0$ creates a debt whose value is recorded in the variable $balance$ reduced by the transaction $amount$ given that $balance \ge 0$ and $amount > balance$.
-
-The debts $debt_{t_0}$ and $debt_{t_1}$ created by this transaction and by a possible further transaction, respectively, are represented in Figure \ref{fig:debt-graph}. Debt will be handled further as a positive value, thus, we define a debt created at $t_i$ as
-
+This transaction at $t_0$ creates a debt whose value is recorded in the variable $balance$ after the transaction. In other words, the value of $balance$ before the transaction is reduced by the transaction $amount$, and it becomes a debt because, before the transaction, $balance \ge 0$ and $amount > balance$. The debts $debt_{t_0}$ and $debt_{t_1}$ created by this transaction and by a possible further transaction, respectively, are represented in Figure \ref{fig:debt-graph}. Furthermore, these debts are treated as positive values. Thus, we define a debt created at $t_i$ as
 \vspace{0.2cm}
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
@@ -41,11 +38,9 @@ The debts $debt_{t_0}$ and $debt_{t_1}$ created by this transaction and by a pos
 \vspace{-0.2cm}
 
 By declaring $txid_{t_i}$ as the id for a transaction which is executed at time $t_i$ and with $accid$ as the account id, we are defining a so-called \textit{deltaDebt} with index $i$ as the following tuple:
-
 \begin{align}
 	deltaDebt_i = (t_i, txid_{t_i}, amount_{t_i}, debtPos_{t_i}, accid),
 \end{align}
-
 where the $amount_{t_i}$ as well as $debtPos_{t_i}$ are both initialized with $debt_{t_i}$. In the following, $amount_{t_i}$ will always stay with its original value whereas $debtPos_{t_i}$ is reduced by any amount \textbf{received} by the same account.
 
 The creation of a \textit{deltaDebt} can be described as follows:
@@ -82,7 +77,7 @@ In order to pay back an open debt, at every transfer the $deltaDebt$s need to be
 \end{asm}
 
 
-In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a list of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding list that has the minimum timestamp. Further \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or also \textbf{undef}.
+In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a list of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding list with the minimum timestamp. Further, \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or \textbf{undef}.
 
 $debtPos(Tmin)$ reads or writes the pending amount for a particular $deltaDebt$ (here: $Tmin$).
 
