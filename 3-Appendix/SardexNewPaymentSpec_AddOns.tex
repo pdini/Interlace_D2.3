@@ -31,7 +31,7 @@ This transaction at $t_0$ creates a debt whose value is recorded in the variable
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
            |balance_{t_i} - amount_{t_i}| \+\+ & \IF i = 0 \AND balance_{t_0} \ge 0 \AND amount > balance\\
-           amount_{t_i} & \ELSEIF i > 0 \AND balance_{t_i} < 0\\
+           amount_{t_i} & IF i > 0 \AND balance_{t_i} < 0\\
            0 & \ELSE
         \end{array}\right.
 \end{asm}
@@ -39,11 +39,11 @@ This transaction at $t_0$ creates a debt whose value is recorded in the variable
 
 By declaring $txid_{t_i}$ as the id for a transaction which is executed at time $t_i$ and with $accid$ as the account id, we are defining a so-called \textit{deltaDebt} with index $i$ as the following tuple:
 \begin{align}
-	deltaDebt_i = (t_i, txid_{t_i}, amount_{t_i}, debtPos_{t_i}, accid),
+	deltaDebt_i = (t_i, txid_{t_i}, debtPos_{t_i}, accid),
 \end{align}
-where the $amount_{t_i}$ as well as $debtPos_{t_i}$ are both initialized with $debt_{t_i}$. In the following, $amount_{t_i}$ will always stay with its original value whereas $debtPos_{t_i}$ is reduced by any amount \textbf{received} by the same account.
+The $amount_{t_i}$ is not needed any more once the new $debtPos_{t_i}$ has been computed, namely as $debtPos_{t_i}$ reduced by any amount \textbf{received} by the same account.
 
-The creation of a \textit{deltaDebt} can be described as follows:
+The creation of a \textit{deltaDebt} can be described as follows. Note that it will be called only when some debit is created or an existing credit increased.
 
 \begin{asm}
 	\ASM{CreateDeltaDebt}(txid,currentDate,from,amount)=\+
@@ -53,31 +53,30 @@ The creation of a \textit{deltaDebt} can be described as follows:
 						|balance - amount|\+& \IF balance > 0\\
 						amount & \ELSE
 					\end{array}\right.\-\-
-				\LET deltaDebt = (currentDate, txid, debt, debt, from)\+
+				\LET deltaDebt = (currentDate, txid, debt, from)\+
 					\ASM{WriteDeltaDebt}(deltaDebt)
 \end{asm}
 
-In order to pay back an open debt, at every transfer the $deltaDebt$s need to be checked for possible clearances:
+In order to pay back an open debt, at every transfer the $deltaDebt$s (if there are any) need to be checked for possible clearances:
 
 \begin{asm}
 	\ASM{ClearDeltaDebt}(txid,to,amount)=\+
+	\IF amount \not = 0 \THEN \mbox{  // no debt change when }amount=0\+	    
 		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\+
-			\ASM{ClearDebt}(openDeltas, amount)\dec\-
+			\IF openDeltas \not = \emptyset \THEN \+
+			   \ASM{ClearDebt}(openDeltas, amount) \dec\dec\dec\-
 	\WHERE \+
-		\ASM{ClearDebt}(openDeltas, amount) =\+
-		\IF amount > 0 \THEN\+
-			\LET Tmin = \ASM{SelectOldestDebt}(openDeltas)\\
-			\IF (Tmin\ \neq\ \UNDEF) \THEN\+
-				\IF debtPos(Tmin) \ge amount \THEN\+
+		\ASM{ClearDebt}(openDeltas, amount) =\+	
+			\LET Tmin = \ASM{SelectOldestDebt}(openDeltas) \mbox{  // NB. }Tmin \not = \UNDEF\\				\IF debtPos(Tmin) \ge amount \THEN\+
 					debtPos(Tmin) := debtPos(Tmin) - amount\-
-				\ELSE\+
+				\ELSE \+
 					\LET restAmount = amount - debtPos(Tmin)\+
 						debtPos(Tmin) := 0\\
 						\ASM{ClearDebt}(\{d \in openDeltas\ |\ d \neq Tmin \}, restAmount )\dec\dec\dec\-
 \end{asm}
 
 
-In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a list of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding list with the minimum timestamp. Further, \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or \textbf{undef}.
+In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a set of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding set with the minimum timestamp. Further, \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or \textbf{undef}.
 
 $debtPos(Tmin)$ reads or writes the pending amount for a particular $deltaDebt$ (here: $Tmin$).
 
