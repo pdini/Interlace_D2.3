@@ -63,22 +63,23 @@ In order to pay back an open debt, at every transfer the $deltaDebt$s (if there 
 	\ASM{ClearDeltaDebt}(txid,to,amount)=\+
 	\IF amount \not = 0 \THEN \mbox{  // no debt change when }amount=0\+	    
 		\LET openDeltas = \ASM{SelectOpenDeltaDebtsFor}(to)\+
-			\IF openDeltas \not = \emptyset \THEN \+
-			   \ASM{ClearDebt}(openDeltas, amount) \dec\dec\dec\-
+		   \ASM{ClearDebt}(openDeltas, amount) \dec\dec\-
 	\WHERE \+
-		\ASM{ClearDebt}(openDeltas, amount) =\+	
-			\LET Tmin = \ASM{SelectOldestDebt}(openDeltas) \mbox{  // NB. }Tmin \not = \UNDEF\\				\IF debtPos(Tmin) \ge amount \THEN\+
-					debtPos(Tmin) := debtPos(Tmin) - amount\-
+		\ASM{ClearDebt}(openDeltas, amount) =\+
+			\IF openDeltas \not = \emptyset \THEN\+
+				\LET oldestOpenDebt = \ASM{SelectOldestDebt}(openDeltas) \mbox{  // NB. }oldestOpenDebt \not = \UNDEF\\
+				\IF debtPos(oldestOpenDebt) \ge amount \THEN\+
+					debtPos(oldestOpenDebt) := debtPos(oldestOpenDebt) - amount\-
 				\ELSE \+
-					\LET restAmount = amount - debtPos(Tmin)\+
-						debtPos(Tmin) := 0\\
-						\ASM{ClearDebt}(\{d \in openDeltas\ |\ d \neq Tmin \}, restAmount )\dec\dec\dec\-
+					\LET restAmount = amount - debtPos(oldestOpenDebt)\+
+						debtPos(oldestOpenDebt) := 0\\
+						\ASM{ClearDebt}(\{d \in openDeltas\ |\ d \neq oldestOpenDebt \}, restAmount )\dec\dec\dec\-
 \end{asm}
 
 
-In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a set of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding set with the minimum timestamp. Further, \ASM{SelectOldestDebt} returns \textbf{undef} if $openDeltas$ are empty or \textbf{undef}.
+In this ASM example we assume that \ASM{SelectOpenDeltaDebtsFor} is returning a set of open \textit{deltaDebt} entries from the persistence layer where $debtPos$ of each $deltaDebt$ is bigger than $0$. \ASM{SelectOldestDebt} selects the $deltaDebt$ of a corresponding set with the minimum timestamp. Further, \ASM{SelectOldestDebt} is only defined if $openDeltas$ is not an empty set.
 
-$debtPos(Tmin)$ reads or writes the pending amount for a particular $deltaDebt$ (here: $Tmin$).
+$debtPos(oldestOpenDebt)$ reads or writes the pending amount for a particular $deltaDebt$ (here: $oldestOpenDebt$).
 
 
 
