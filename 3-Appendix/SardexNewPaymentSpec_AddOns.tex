@@ -31,7 +31,7 @@ This transaction at $t_0$ creates a debt whose value is recorded in the variable
 \begin{asm}
 	debt_{t_i} = \left\{\begin{array}{ll}
            |balance_{t_i} - amount_{t_i}| \+\+ & \IF i = 0 \AND balance_{t_0} \ge 0 \AND amount > balance\\
-           amount_{t_i} & IF i > 0 \AND balance_{t_i} < 0\\
+           amount_{t_i} & \IF i > 0 \AND balance_{t_i} < 0\\
            0 & \ELSE
         \end{array}\right.
 \end{asm}
@@ -67,7 +67,7 @@ In order to pay back an open debt, at every transfer the $deltaDebt$s (if there 
 	\WHERE \+
 		\ASM{ClearDebt}(openDeltas, amount) =\+
 			\IF openDeltas \not = \emptyset \THEN\+
-				\LET oldestOpenDebt = \ASM{SelectOldestDebt}(openDeltas) \mbox{  // NB. }oldestOpenDebt \not = \UNDEF\\
+				\LET oldestOpenDebt = \ASM{SelectOldestDebt}(openDeltas) \mbox{  // NB. }oldestOpenDebt \not =\ \UNDEF\\
 				\IF debtPos(oldestOpenDebt) \ge amount \THEN\+
 					debtPos(oldestOpenDebt) := debtPos(oldestOpenDebt) - amount\-
 				\ELSE \+
