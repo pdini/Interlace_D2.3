@@ -24,7 +24,7 @@ More precisely, any transaction that increases the debt of an account triggers a
   \label{fig:debt-graph}
 \end{figure}
 
-Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ with $j>k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction at $t_0$, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$.
+Figure \ref{fig:debt-graph} illustrates a transaction flow for a single account with 5 transactions and their timestamps named $t_i$, where $i$ covers the interval $[-2,2]$ in discrete steps of $1$. Two timestamps $t_j$ and $t_k$ with $j<k$ imply that $t_j$ is older than $t_k$. Let's assume a transaction at $t_0$, as illustrated in the figure, which turns a positive balance into a negative value. That event then defines a starting timestamp at $t_0$.
 
 This transaction at $t_0$ creates a debt whose value is recorded in the variable $balance$ after the transaction. In other words, the value of $balance$ before the transaction is reduced by the transaction $amount$, and it becomes a debt because, before the transaction, $balance \ge 0$ and $amount > balance$. The debts $debt_{t_0}$ and $debt_{t_1}$ created by this transaction and by a possible further transaction, respectively, are represented in Figure \ref{fig:debt-graph}. Furthermore, these debts are treated as positive values. Thus, we define a debt created at $t_i$ as
 \vspace{0.2cm}
